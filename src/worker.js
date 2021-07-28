@@ -38,20 +38,20 @@ function onModuleReady(SQL) {
             if (db === null) {
                 createDb();
             }
-            var callback = function callback(row) {
+            var callbackFn = function callback(row) {
                 return postMessage({
                     id: data["id"],
                     row: row,
                     finished: false
                 });
             };
-            var done = function done() {
+            var doneFn = function done() {
                 return postMessage({
                     id: data["id"],
                     finished: true
                 });
             };
-            return db.each(data["sql"], data["params"], callback, done);
+            return db.each(data["sql"], data["params"], callbackFn, doneFn);
         case "export":
             buff = db["export"]();
             result = {
