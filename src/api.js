@@ -358,6 +358,15 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
         return sqlite3_column_double(this.stmt, pos);
     };
 
+    Statement.prototype.getBigInt = function getBigInt(pos) {
+        if (pos == null) {
+            pos = this.pos;
+            this.pos += 1;
+        }
+        var text = sqlite3_column_text(this.stmt, pos);
+        return BigInt(text);
+    };
+
     Statement.prototype.getString = function getString(pos) {
         if (pos == null) {
             pos = this.pos;
@@ -401,7 +410,7 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
             switch (sqlite3_column_type(this.stmt, field)) {
                 case SQLITE_INTEGER:
                 case SQLITE_FLOAT:
-                    results1.push(this.getNumber(field));
+                    results1.push(this.getBigInt(field));
                     break;
                 case SQLITE_TEXT:
                     results1.push(this.getString(field));
