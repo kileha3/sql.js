@@ -116,6 +116,13 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
         "number",
         ["number", "number", "number"]
     );
+
+    var sqlite3_bind_int64 = cwrap(
+        "sqlite3_bind_int64",
+        "number",
+        ["number", "number", "number"]
+    );
+
     var sqlite3_bind_parameter_index = cwrap(
         "sqlite3_bind_parameter_index",
         "number",
@@ -409,8 +416,10 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
         for (var field = 0; field < ref; field += 1) {
             switch (sqlite3_column_type(this.stmt, field)) {
                 case SQLITE_INTEGER:
-                case SQLITE_FLOAT:
                     results1.push(this.getBigInt(field));
+                    break;
+                case SQLITE_FLOAT:
+                    results1.push(this.getNumber(field));
                     break;
                 case SQLITE_TEXT:
                     results1.push(this.getString(field));
@@ -556,6 +565,20 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
         return true;
     };
 
+    Statement.prototype.bindBigInt = function bindBigInt(num, pos) {
+        if (pos == null) {
+            pos = this.pos;
+            this.pos += 1;
+        }
+        var bindfunc = (
+            num === (num | 0)
+                ? sqlite3_bind_int64
+                : sqlite3_bind_double
+        );
+        this.db.handleError(bindfunc(this.stmt, pos, num));
+        return true;
+    };
+
     Statement.prototype.bindNull = function bindNull(pos) {
         if (pos == null) {
             pos = this.pos;
@@ -569,10 +592,23 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
             pos = this.pos;
             this.pos += 1;
         }
+
+        var floatRegExp = /^[+-]?\d+\.\d+$/;
+
         switch (typeof val) {
             case "string":
+                if (floatRegExp.test(val)) {
+                    return this.bindNumber(val + 0, pos);
+                }
+                if (/^[+-]?\d+?$/.test(val)) {
+                    return this.bindBigInt(val + 0, pos);
+                }
                 return this.bindString(val, pos);
             case "number":
+                if (floatRegExp.test(val)) {
+                    return this.bindNumber(val + 0, pos);
+                }
+                return this.bindBigInt(val + 0, pos);
             case "boolean":
                 return this.bindNumber(val + 0, pos);
             case "object":
