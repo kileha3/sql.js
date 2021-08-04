@@ -593,21 +593,12 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
             this.pos += 1;
         }
 
-        var floatRegExp = /^[+-]?\d+\.\d+$/;
-
         switch (typeof val) {
             case "string":
-                if (floatRegExp.test(val)) {
-                    return this.bindNumber(val + 0, pos);
-                }
-                if (/^[+-]?\d+?$/.test(val)) {
-                    return this.bindBigInt(val + 0, pos);
-                }
                 return this.bindString(val, pos);
             case "number":
-                if (floatRegExp.test(val)) {
-                    return this.bindNumber(val + 0, pos);
-                }
+                return this.bindNumber(val + 0, pos);
+            case "bigint":
                 return this.bindBigInt(val + 0, pos);
             case "boolean":
                 return this.bindNumber(val + 0, pos);
